@@ -98,14 +98,17 @@ Track TagManager::readTags(const QString& filePath) {
             TagLib::MP4::File mp4(filePath.toUtf8().constData());
             if (mp4.isValid()) {
 #if TAGLIB_MAJOR_VERSION >= 2
-                // TagLib 2.x: use propertySet()
-                if (mp4.tag()->propertySet().contains("covr")) {
-                    auto coverArtList = mp4.tag()->propertySet()["covr"].toCoverArtList();
-                    if (!coverArtList.isEmpty()) {
-                        auto img = coverArtList.front();
+                // TagLib 2.x: itemListMap() removed, use items()
+                // Item::toByteVectorList() for binary data access
+                auto& itemMap = mp4.tag()->items();
+                if (itemMap.contains("covr")) {
+                    auto& item = itemMap["covr"];
+                    auto bvList = item.toByteVectorList();
+                    if (!bvList.isEmpty()) {
+                        auto bv = bvList.front();
                         track.coverData = QByteArray(
-                            reinterpret_cast<const char*>(img.data().data()),
-                            static_cast<int>(img.data().size()));
+                            reinterpret_cast<const char*>(bv.data()),
+                            static_cast<int>(bv.size()));
                     }
                 }
 #else
