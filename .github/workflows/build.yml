@@ -151,8 +151,8 @@ jobs:
       - name: Deploy
         run: |
           mkdir -p release
-          cp build/music release/MusicPlayer.app/Contents/MacOS/
-          $(brew --prefix qt@6)/bin/macdeployqt release/MusicPlayer.app -always-overwrite
+          cp build/music release/MusicPlayer
+          $(brew --prefix qt@6)/bin/macdeployqt release/MusicPlayer -always-overwrite
           codesign --force --deep --sign - release/MusicPlayer.app
 
       - name: Create DMG
