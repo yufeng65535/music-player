@@ -114,6 +114,10 @@ jobs:
           Copy-Item build\Release\music.exe release\
           windeployqt release\music.exe --release --no-compiler-runtime --no-system-d3d-compiler
 
+      - name: Copy TagLib DLL
+        run: |
+          Copy-Item C:\vcpkg\installed\x64-windows\bin\tag.dll release\
+
       - name: Package
         run: |
           Compress-Archive -Path release\* -DestinationPath MusicPlayer-Windows.zip
