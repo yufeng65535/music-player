@@ -150,9 +150,37 @@ jobs:
 
       - name: Deploy
         run: |
-          mkdir -p release
-          cp build/music release/MusicPlayer
-          $(brew --prefix qt@6)/bin/macdeployqt release/MusicPlayer -always-overwrite
+          mkdir -p release/MusicPlayer.app/Contents/{MacOS,Resources,Frameworks}
+
+          # Info.plist
+          cat > release/MusicPlayer.app/Contents/Info.plist <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>music</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.musicplayer.app</string>
+              <key>CFBundleName</key>
+              <string>MusicPlayer</string>
+              <key>CFBundleVersion</key>
+              <string>0.1.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>0.1.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>LSMinimumSystemVersion</key>
+              <string>12.0</string>
+          </dict>
+          </plist>
+          PLIST
+
+          cp build/music release/MusicPlayer.app/Contents/MacOS/music
+          chmod +x release/MusicPlayer.app/Contents/MacOS/music
+          cp resources/app-icon.svg release/MusicPlayer.app/Contents/Resources/
+
+          $(brew --prefix qt@6)/bin/macdeployqt release/MusicPlayer.app -always-overwrite
           codesign --force --deep --sign - release/MusicPlayer.app
 
       - name: Create DMG
