@@ -12,8 +12,15 @@ set(CMAKE_AUTOUIC ON)
 find_package(Qt6 REQUIRED COMPONENTS
     Core Gui Widgets Multimedia Network Sql Concurrent
 )
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(TAGLIB REQUIRED taglib)
+
+# TagLib: try find_package first (Windows/vcpkg, macOS brew), fallback to pkg-config (Linux)
+if(NOT TARGET TagLib::TagLib)
+    find_package(TagLib QUIET)
+endif()
+if(NOT TARGET TagLib::TagLib)
+    find_package(PkgConfig REQUIRED)
+    pkg_check_modules(TAGLIB REQUIRED taglib)
+endif()
 
 # ── kissfft (vendored single-header) ──────────────────────────────
 set(KISSFFT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/kissfft)
@@ -52,6 +59,10 @@ target_link_libraries(music PRIVATE
     Qt6::Core Qt6::Gui Qt6::Widgets
     Qt6::Multimedia Qt6::Network Qt6::Sql Qt6::Concurrent
     kissfft
-    ${TAGLIB_LIBRARIES}
 )
-target_include_directories(music PRIVATE ${TAGLIB_INCLUDE_DIRS})
+if(TARGET TagLib::TagLib)
+    target_link_libraries(music PRIVATE TagLib::TagLib)
+else()
+    target_link_libraries(music PRIVATE ${TAGLIB_LIBRARIES})
+    target_include_directories(music PRIVATE ${TAGLIB_INCLUDE_DIRS})
+endif()

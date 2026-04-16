@@ -10,6 +10,7 @@
 #include <taglib/mp4file.h>
 #include <taglib/mp4tag.h>
 #include <taglib/mp4coverart.h>
+#include <taglib/taglib.h>
 
 #include <QFileInfo>
 #include <QDebug>
@@ -96,6 +97,19 @@ Track TagManager::readTags(const QString& filePath) {
         if (track.coverData.isEmpty()) {
             TagLib::MP4::File mp4(filePath.toUtf8().constData());
             if (mp4.isValid()) {
+#if TAGLIB_MAJOR_VERSION >= 2
+                // TagLib 2.x: use propertySet()
+                if (mp4.tag()->propertySet().contains("covr")) {
+                    auto coverArtList = mp4.tag()->propertySet()["covr"].toCoverArtList();
+                    if (!coverArtList.isEmpty()) {
+                        auto img = coverArtList.front();
+                        track.coverData = QByteArray(
+                            reinterpret_cast<const char*>(img.data().data()),
+                            static_cast<int>(img.data().size()));
+                    }
+                }
+#else
+                // TagLib 1.x: use itemListMap()
                 auto& items = mp4.tag()->itemListMap();
                 if (items.contains("covr")) {
                     auto coverArtList = items["covr"].toCoverArtList();
@@ -106,6 +120,7 @@ Track TagManager::readTags(const QString& filePath) {
                             static_cast<int>(img.data().size()));
                     }
                 }
+#endif
             }
         }
     } catch (const std::exception& e) {
