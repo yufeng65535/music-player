@@ -20,6 +20,10 @@ command -v cmake &>/dev/null || brew install cmake
 QT_PREFIX="$(brew --prefix qt@6)"
 echo "Qt 路径: $QT_PREFIX"
 
+# 检查 Qt6 版本 — macOS 12 需要 Qt 6.2-6.7
+QT_VERSION=$("$QT_PREFIX/bin/qmake" -query QT_VERSION 2>/dev/null || echo "unknown")
+echo "Qt 版本: $QT_VERSION"
+
 # ── 2. 配置 ──────────────────────────────────────────────────
 echo "[2/5] 配置 CMake..."
 rm -rf build
@@ -97,6 +101,9 @@ echo "=== 构建完成 ==="
 echo "输出: release/MusicPlayer.app"
 echo ""
 echo "运行: open release/MusicPlayer.app"
+
+# 自动创建 DMG
 echo ""
-echo "创建 DMG:"
-echo "  hdiutil create -volname MusicPlayer -srcfolder release/MusicPlayer.app -ov -format UDZO MusicPlayer.dmg"
+echo "正在创建 DMG..."
+hdiutil create -volname MusicPlayer -srcfolder release/MusicPlayer.app -ov -format UDZO MusicPlayer-macOS.dmg
+echo "DMG 已创建: MusicPlayer-macOS.dmg"

@@ -124,9 +124,11 @@ jobs:
           name: MusicPlayer-Windows
           path: MusicPlayer-Windows.zip
 
-  # ── macOS Intel ───────────────────────────────────────────────
-  macos-intel:
-    runs-on: macos-13
+  # ── macOS ─────────────────────────────────────────────────────
+  # Note: GitHub only provides ARM macOS runners (Apple Silicon).
+  # Intel Mac builds can be done locally via build-macos.sh.
+  macos:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -138,7 +140,8 @@ jobs:
         run: |
           mkdir build && cd build
           cmake .. -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
+            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)" \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET="12.0"
 
       - name: Build
         run: |
@@ -148,60 +151,23 @@ jobs:
       - name: Deploy
         run: |
           mkdir -p release
-          cp build/music release/MusicPlayer
-          $(brew --prefix qt@6)/bin/macdeployqt release/MusicPlayer -always-overwrite
+          cp build/music release/MusicPlayer.app/Contents/MacOS/
+          $(brew --prefix qt@6)/bin/macdeployqt release/MusicPlayer.app -always-overwrite
+          codesign --force --deep --sign - release/MusicPlayer.app
 
       - name: Create DMG
         run: |
-          hdiutil create -volname MusicPlayer -srcfolder release -ov -format UDZO MusicPlayer-macOS-Intel.dmg
+          hdiutil create -volname MusicPlayer -srcfolder release -ov -format UDZO MusicPlayer-macOS.dmg
 
-      - name: Upload artifact (macOS Intel)
+      - name: Upload artifact (macOS)
         uses: actions/upload-artifact@v4
         with:
-          name: MusicPlayer-macOS-Intel
-          path: MusicPlayer-macOS-Intel.dmg
-
-  # ── macOS Apple Silicon ──────────────────────────────────────
-  macos-arm:
-    runs-on: macos-14
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install dependencies
-        run: |
-          brew install qt@6 taglib cmake
-
-      - name: Configure
-        run: |
-          mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release \
-            -DCMAKE_PREFIX_PATH="$(brew --prefix qt@6)"
-
-      - name: Build
-        run: |
-          cd build
-          make -j$(sysctl -n hw.ncpu)
-
-      - name: Deploy
-        run: |
-          mkdir -p release
-          cp build/music release/MusicPlayer
-          $(brew --prefix qt@6)/bin/macdeployqt release/MusicPlayer -always-overwrite
-          codesign --force --deep --sign - release/MusicPlayer
-
-      - name: Create DMG
-        run: |
-          hdiutil create -volname MusicPlayer -srcfolder release -ov -format UDZO MusicPlayer-macOS-ARM.dmg
-
-      - name: Upload artifact (macOS ARM)
-        uses: actions/upload-artifact@v4
-        with:
-          name: MusicPlayer-macOS-ARM
-          path: MusicPlayer-macOS-ARM.dmg
+          name: MusicPlayer-macOS
+          path: MusicPlayer-macOS.dmg
 
   # ── Release (on tag) ──────────────────────────────────────────
   release:
-    needs: [linux, windows, macos-intel, macos-arm]
+    needs: [linux, windows, macos]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     permissions:
