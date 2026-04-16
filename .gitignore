@@ -1,0 +1,21 @@
+# Build outputs
+build/
+release/
+*.AppImage
+*.dmg
+*.zip
+*.exe
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/
